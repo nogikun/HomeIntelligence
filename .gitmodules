@@ -1,0 +1,3 @@
+[submodule "textlint"]
+	path = textlint
+	url = git@github.com:nogikun/textlint.git

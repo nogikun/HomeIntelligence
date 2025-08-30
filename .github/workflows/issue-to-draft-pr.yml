@@ -1,0 +1,81 @@
+name: Issue to Draft PR
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  create-draft-pr:
+    runs-on: ubuntu-latest
+    # Only run if the issue title contains [Draft]
+    if: contains(github.event.issue.title, '[Draft]')
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Create new branch for draft PR
+        run: |
+          # Create a unique branch name based on issue number
+          BRANCH_NAME="draft/issue-${{ github.event.issue.number }}"
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$BRANCH_NAME"
+          
+          # Create a placeholder commit to initialize the branch
+          echo "# Draft implementation for issue #${{ github.event.issue.number }}" > DRAFT.md
+          echo "" >> DRAFT.md
+          echo "This is a draft branch created automatically from issue #${{ github.event.issue.number }}." >> DRAFT.md
+          echo "Please add your implementation here." >> DRAFT.md
+          git add DRAFT.md
+          git commit -m "Initialize draft branch for issue #${{ github.event.issue.number }}"
+          git push origin "$BRANCH_NAME"
+
+      - name: Create Draft PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = context.payload.issue;
+            const branchName = `draft/issue-${issue.number}`;
+            
+            // Create the draft PR title by adding "Draft: " prefix
+            const title = `Draft: ${issue.title}`;
+            
+            // Use the issue body as PR body, with a reference to the original issue
+            const separator = '---';
+            const body = `${issue.body || 'No description provided.'}
+            
+            ${separator}
+            *This draft PR was automatically created from issue #${issue.number}*`;
+
+            try {
+              const pr = await github.rest.pulls.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: title,
+                body: body,
+                head: branchName,
+                base: 'main',
+                draft: true
+              });
+              
+              console.log(`Draft PR created successfully: ${pr.data.html_url}`);
+              
+              // Add a comment to the original issue with the PR link
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body: `🤖 Draft PR automatically created: #${pr.data.number}`
+              });
+              
+            } catch (error) {
+              console.error('Error creating draft PR:', error);
+              throw error;
+            }
