@@ -2,9 +2,30 @@
   "permissions": {
     "allow": [
       "Bash(git checkout:*)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(mkdir:*)",
+      "Bash(npm init:*)",
+      "Bash(npm install:*)",
+      "Bash(npx tailwindcss init:*)",
+      "Bash(npm run dev:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(npm run storybook:*)"
     ],
     "deny": [],
     "ask": []
-  }
+  },
+  "enabledMcpjsonServers": [
+    "playwright",
+    "markitdown",
+    "arxiv-mcp-server",
+    "context7",
+    "youtube",
+    "mcp-taskmanager",
+    "sequential-thinking",
+    "browsermcp",
+    "filesystem",
+    "time",
+    "puppeteer",
+    "memory"
+  ]
 }
